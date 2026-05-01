@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "temple-lighting-automation"
+version = "1.0.0"
+description = "Temple lighting donation spreadsheet automation (点灯自动化工具)"
+requires-python = ">=3.7"
+dependencies = [
+    "openpyxl",
+]
+
+[project.scripts]
+temple-lighting = "temple_lighting.cli:main"

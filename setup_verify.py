@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
 Setup Verification Script
-Run this to verify your automation environment is set up correctly
+Run this to verify your automation environment is set up correctly.
+
+Usage:
+    python setup_verify.py
 """
 
 import sys
@@ -13,7 +16,7 @@ def check_python_version():
     """Check if Python version is compatible"""
     version = sys.version_info
     print(f"Python Version: {version.major}.{version.minor}.{version.micro}")
-    
+
     if version.major >= 3 and version.minor >= 7:
         print("✅ Python version compatible")
         return True
@@ -34,24 +37,26 @@ def check_openpyxl():
         return False
 
 
-def check_files():
-    """Check if required files exist"""
-    required_files = [
-        "temple_lighting_automation.py",
-        "menu.py",
-        "README.md"
+def check_package():
+    """Check if the temple_lighting package is present"""
+    required = [
+        Path("temple_lighting/__init__.py"),
+        Path("temple_lighting/automation.py"),
+        Path("temple_lighting/batch.py"),
+        Path("temple_lighting/cli.py"),
+        Path("README.md"),
     ]
-    
+
     all_exist = True
     print("\nRequired Files:")
-    for file in required_files:
-        if Path(file).exists():
-            size = Path(file).stat().st_size / 1024
-            print(f"✅ {file} ({size:.1f} KB)")
+    for path in required:
+        if path.exists():
+            size = path.stat().st_size / 1024
+            print(f"✅ {path} ({size:.1f} KB)")
         else:
-            print(f"❌ {file} - NOT FOUND")
+            print(f"❌ {path} - NOT FOUND")
             all_exist = False
-    
+
     return all_exist
 
 
@@ -61,21 +66,21 @@ def check_excel_file():
     print("Excel File Verification")
     print("="*60)
     excel_path = input("Enter path to your Excel file (or press Enter to skip): ").strip()
-    
+
     if not excel_path:
         print("⏭️  Skipping Excel file check")
         return None
-    
+
     excel_path = Path(excel_path)
-    
+
     if not excel_path.exists():
         print(f"❌ File not found: {excel_path}")
         return False
-    
+
     if not excel_path.suffix.lower() == '.xlsx':
         print(f"⚠️  Warning: File is not .xlsx format")
         return False
-    
+
     # Try to load it
     try:
         import openpyxl
@@ -95,36 +100,36 @@ def run_verification():
     print("\n" + "="*60)
     print("🏯 TEMPLE AUTOMATION - SETUP VERIFICATION")
     print("="*60 + "\n")
-    
+
     results = []
-    
+
     # Check Python
     print("1️⃣  Checking Python Installation...")
     results.append(check_python_version())
-    
+
     # Check openpyxl
     print("\n2️⃣  Checking openpyxl Library...")
     results.append(check_openpyxl())
-    
-    # Check files
-    print("\n3️⃣  Checking Required Files...")
-    results.append(check_files())
-    
+
+    # Check package files
+    print("\n3️⃣  Checking Package Files...")
+    results.append(check_package())
+
     # Check Excel file
     print("\n4️⃣  Checking Excel File...")
     excel_result = check_excel_file()
     if excel_result is not None:
         results.append(excel_result)
-    
+
     # Summary
     print("\n" + "="*60)
     print("VERIFICATION SUMMARY")
     print("="*60)
-    
+
     if all(results):
         print("✅ All checks passed! You're ready to go!")
         print("\nNext steps:")
-        print("1. Run: python menu.py")
+        print("1. Run: python -m temple_lighting")
         print("2. Select: 1. Process Single Sheet")
         print("3. Follow the prompts")
         return 0

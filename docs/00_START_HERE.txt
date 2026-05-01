@@ -9,19 +9,16 @@ donation spreadsheet processing. Follow these steps to get started.
 STEP 1: UNDERSTAND WHAT YOU HAVE
 ================================================================================
 
-You have 6 files that work together:
-
 📄 DOCUMENTATION (Read First):
   • 00_START_HERE.txt ..................... This file
   • README.md ............................ Quick start (5 min read)
-  • SOLUTION_SUMMARY.md .................. Full overview (10 min read)
-  • AUTOMATION_GUIDE.md .................. Complete reference (20 min read)
+  • docs/SOLUTION_SUMMARY.md ............. Full overview (10 min read)
+  • docs/AUTOMATION_GUIDE.md ............. Complete reference (20 min read)
 
-🐍 SCRIPTS (Run These):
-  • menu.py ............................. Easy menu interface (START HERE!)
-  • temple_lighting_automation.py ........ Main automation script
-  • temple_batch_processor.py ............ Batch processing script
-  • setup_verify.py ..................... Verify your setup
+🐍 PACKAGE (temple_lighting/):
+  • automation.py ........................ Main automation engine
+  • batch.py ............................. Batch processing
+  • cli.py ............................... Menu interface
 
 ⚙️ CONFIGURATION:
   • batch_config.json ................... Configuration file (auto-created)
@@ -31,24 +28,27 @@ STEP 2: QUICK SETUP (5 MINUTES)
 ================================================================================
 
 1. INSTALL PYTHON DEPENDENCY:
-   Open Terminal/Command Prompt and run:
-   
+   Open Terminal and run these commands one at a time:
+
+   python3 -m venv .venv
+   source .venv/bin/activate
    pip install openpyxl
-   
-   (This only needs to be done once)
+
+   Your terminal prompt will now show (.venv) — this means it's ready.
+
+   NOTE FOR MAC USERS: If you see "externally-managed-environment" error,
+   the venv approach above is the correct solution. Do not use --break-system-packages.
+
+   IMPORTANT: Each time you open a new Terminal window, you must run:
+   source .venv/bin/activate
+   before using the tool.
 
 2. VERIFY YOUR SETUP:
-   In the folder with these files, run:
-   
    python setup_verify.py
-   
-   This checks everything is working correctly.
 
 3. START USING IT:
-   Run this command:
-   
-   python menu.py
-   
+   python -m temple_lighting
+
    Then select option "1. Process Single Sheet"
 
 ================================================================================
@@ -58,13 +58,14 @@ STEP 3: NORMAL MONTHLY WORKFLOW
 You'll do this TWICE PER MONTH:
 
 FOR 初一 (1st day of month):
-  1. python menu.py
-  2. Select "1. Process Single Sheet"
-  3. Enter your Excel file path
-  4. Select the "初一" sheet (e.g., "三月初一")
-  5. Paste your names list (with numbers and checkmarks)
-  6. Press Enter twice
-  7. ✅ DONE! File is automatically saved
+  1. source .venv/bin/activate    ← (skip if already activated)
+  2. python -m temple_lighting
+  3. Select "1. Process Single Sheet"
+  4. Enter your Excel file path
+  5. Select the "初一" sheet (e.g., "三月初一")
+  6. Paste your names list (with numbers and checkmarks)
+  7. Press Enter twice
+  8. ✅ DONE! File is automatically saved
 
 FOR 十五 (15th day of month):
   1. Repeat the same process
@@ -85,11 +86,9 @@ Desktop/
 │   │   ├── 丙午年初一十五点灯.xlsx ......... Main Excel file
 │   │   └── PDFs/ ......................... For exported PDFs
 │   │
-│   └── scripts/ .......................... All automation scripts
-│       ├── menu.py
-│       ├── temple_lighting_automation.py
-│       ├── temple_batch_processor.py
-│       ├── setup_verify.py
+│   └── temple-lighting-automation/ ....... This project folder
+│       ├── temple_lighting/
+│       ├── .venv/                        ← Virtual environment (local only)
 │       ├── batch_config.json
 │       └── names/ (optional)
 │           ├── 正月初一_names.txt
@@ -141,18 +140,20 @@ Problem? Check these in order:
 2. Read: README.md
    Quick start and troubleshooting
 
-3. Read: AUTOMATION_GUIDE.md
+3. Read: docs/AUTOMATION_GUIDE.md
    Comprehensive documentation and advanced options
-
-4. Check the script comments
-   Both Python scripts have detailed comments explaining each section
 
 ================================================================================
 TROUBLESHOOTING QUICK FIXES
 ================================================================================
 
 PROBLEM: "ModuleNotFoundError: No module named 'openpyxl'"
-FIX: pip install openpyxl
+FIX: Make sure your virtual environment is activated first:
+     source .venv/bin/activate
+     pip install openpyxl
+
+PROBLEM: "externally-managed-environment" when running pip
+FIX: Use a virtual environment (see STEP 2 above)
 
 PROBLEM: "File not found"
 FIX: Use the FULL file path, like:
@@ -164,18 +165,13 @@ FIX: Use the sheet number instead of the name, like: "6"
 PROBLEM: Font shows as different style
 FIX: Install KaiTi TC fonts, or change the font name in the script
 
-PROBLEM: "Permission denied"
-FIX: 
-  - Windows: Right-click Command Prompt → Run as Administrator
-  - Mac/Linux: Add "sudo " before the command
-
 ================================================================================
 STEP 7: ADVANCED OPTIONS (OPTIONAL)
 ================================================================================
 
 BATCH PROCESSING (Process multiple sheets at once):
   1. Edit batch_config.json
-  2. Run: python temple_batch_processor.py
+  2. Run: python -m temple_lighting.batch
 
 SAVE NAMES FOR REUSE (Next year):
   1. Create files like: 正月初一_names.txt
@@ -183,10 +179,9 @@ SAVE NAMES FOR REUSE (Next year):
   3. Use in batch mode
 
 CUSTOMIZE FONTS/FORMATTING:
-  1. Edit: temple_lighting_automation.py
+  1. Edit: temple_lighting/automation.py
   2. Look for: Font, footer_text, alignment sections
-  3. Modify as needed
-  4. Save and run
+  3. Save and run
 
 ================================================================================
 TIME SAVINGS
@@ -204,18 +199,17 @@ YOU'RE ALL SET! 🎉
 
 To get started right now:
 
-1. pip install openpyxl
-2. python menu.py
-3. Follow the on-screen prompts
+  python3 -m venv .venv
+  source .venv/bin/activate
+  pip install openpyxl
+  python -m temple_lighting
 
-For more details, see README.md or AUTOMATION_GUIDE.md
+For more details, see README.md or docs/AUTOMATION_GUIDE.md
 
 Happy automating! 🙏
 
 ================================================================================
 VERSION: 1.0
-CREATED: 2024
-COMPATIBILITY: Python 3.7+, Windows/Mac/Linux
+COMPATIBILITY: Python 3.7+, Mac/Linux/Windows
 
-Questions? Check the documentation files or modify the scripts as needed!
 ================================================================================

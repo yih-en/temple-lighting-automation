@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-Simple Menu Interface for Temple Lighting Automation
-Run this for an easy-to-use menu-driven interface
+Menu interface for Temple Lighting Automation.
+Run this for an easy-to-use menu-driven interface.
+
+Usage:
+    python -m temple_lighting
 """
 
 import os
 import sys
 from pathlib import Path
 import subprocess
+
 
 def print_menu():
     """Print the main menu"""
@@ -26,25 +30,19 @@ def print_menu():
 def run_single_process():
     """Run the main automation script"""
     print("\n🔄 Starting Single Sheet Processor...")
-    try:
-        subprocess.run([sys.executable, "temple_lighting_automation.py"])
-    except FileNotFoundError:
-        print("❌ Error: temple_lighting_automation.py not found")
+    subprocess.run([sys.executable, "-m", "temple_lighting.automation"])
 
 
 def run_batch_process():
     """Run the batch processor"""
     print("\n📦 Starting Batch Processor...")
-    try:
-        subprocess.run([sys.executable, "temple_batch_processor.py"])
-    except FileNotFoundError:
-        print("❌ Error: temple_batch_processor.py not found")
+    subprocess.run([sys.executable, "-m", "temple_lighting.batch"])
 
 
 def view_guide():
-    """Display the automation guide"""
-    guide_file = "AUTOMATION_GUIDE.md"
-    if Path(guide_file).exists():
+    """Display the quick-start guide"""
+    guide_file = Path(__file__).parent.parent / "docs" / "00_START_HERE.txt"
+    if guide_file.exists():
         with open(guide_file, 'r', encoding='utf-8') as f:
             print("\n" + f.read())
     else:
@@ -55,16 +53,12 @@ def edit_batch_config():
     """Edit or create batch config"""
     config_file = "batch_config.json"
     print(f"\n📝 Opening {config_file}...")
-    
+
     if not Path(config_file).exists():
         print(f"⚠️  Creating default config...")
-        try:
-            from temple_batch_processor import create_default_config
-            create_default_config(config_file)
-        except ImportError:
-            print("❌ Error: Could not create default config")
-            return
-    
+        from temple_lighting.batch import create_default_config
+        create_default_config(config_file)
+
     # Try to open with default editor
     if sys.platform == "darwin":  # macOS
         os.system(f"open {config_file}")
@@ -80,9 +74,9 @@ def open_output_folder():
     print("Examples:")
     print("  - /Users/username/Desktop/temple/点灯")
     print("  - C:\\Users\\username\\Desktop\\temple\\点灯")
-    
+
     folder_path = input("\nEnter folder path: ").strip()
-    
+
     if Path(folder_path).exists():
         if sys.platform == "darwin":  # macOS
             os.system(f"open '{folder_path}'")
@@ -99,11 +93,11 @@ def main():
     print("\n" + "="*60)
     print("Welcome to Temple Lighting Donation Automation!")
     print("="*60)
-    
+
     while True:
         print_menu()
         choice = input("Select option (1-6): ").strip()
-        
+
         if choice == "1":
             run_single_process()
         elif choice == "2":

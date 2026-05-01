@@ -9,8 +9,8 @@ Python CLI tool that automates monthly temple lighting donation spreadsheet proc
 ## Setup
 
 ```bash
-pip install openpyxl
-python setup_verify.py   # optional diagnostics
+pip install openpyxl          # or: pip install -r requirements.txt
+python setup_verify.py        # optional diagnostics
 ```
 
 Python 3.7+ required. No environment variables needed.
@@ -18,10 +18,10 @@ Python 3.7+ required. No environment variables needed.
 ## Running the Tool
 
 ```bash
-python menu.py                      # Recommended: menu-driven interface
-python temple_lighting_automation.py  # Direct interactive mode
-python temple_batch_processor.py    # Batch mode (requires batch_config.json)
-python setup_verify.py              # System diagnostics
+python -m temple_lighting                   # menu-driven interface (recommended)
+python -m temple_lighting.automation        # direct interactive mode
+python -m temple_lighting.batch             # batch mode (requires batch_config.json)
+python setup_verify.py                      # system diagnostics
 ```
 
 ## Architecture
@@ -29,12 +29,12 @@ python setup_verify.py              # System diagnostics
 The project uses a three-tier interface design over a single core engine:
 
 ```
-menu.py
-temple_lighting_automation.py (direct)   →   TempleWorkflow class
-temple_batch_processor.py (batch)
+temple_lighting/cli.py       (menu)
+temple_lighting/automation.py (direct)   →   TempleWorkflow class
+temple_lighting/batch.py     (batch)
 ```
 
-**`TempleWorkflow`** (in `temple_lighting_automation.py`) is the only class in the codebase. All processing flows through its `run_workflow()` method, which executes this pipeline:
+**`TempleWorkflow`** (in `temple_lighting/automation.py`) is the only class in the codebase. All processing flows through its `run_workflow()` method, which executes this pipeline:
 
 1. `clear_sheet_data()` — clears columns B, E, H, K (rows 5–30)
 2. `clean_names()` — strips numbers, checkmarks (✔️/✓), and Unicode invisible chars (U+2060)
@@ -45,17 +45,17 @@ temple_batch_processor.py (batch)
 7. `add_footer()` — inserts blessing text at row 35
 8. `save_workbook()` — persists to .xlsx
 
-**`temple_batch_processor.py`** reads `batch_config.json` to process multiple sheets sequentially. It instantiates `TempleWorkflow` directly for each job — it does not call the other scripts.
+**`temple_lighting/batch.py`** reads `batch_config.json` to process multiple sheets sequentially. It imports `TempleWorkflow` directly from `temple_lighting.automation`.
 
-**`menu.py`** launches the other scripts via `subprocess` for options 1–2, and directly calls `TempleWorkflow` for none — it is purely a navigation wrapper.
+**`temple_lighting/cli.py`** launches `automation` and `batch` modules via `subprocess -m` for menu options 1–2. Option 3 reads `docs/AUTOMATION_GUIDE.md` using a path relative to `__file__`.
 
 ## Key Configuration Points
 
-When customizing behavior, these are the relevant locations in `temple_lighting_automation.py`:
+When customizing behaviour, these are the relevant locations in `temple_lighting/automation.py`:
 
-- **Font/size** (~line 180): `Font(name='KaiTi TC', size=15)`
-- **Column layout**: `name_cols = [2, 5, 8, 11]` (B, E, H, K) and row range rows 5–30
-- **Footer text** (~line 174): `"出入平安   生意興隆   身體健康"`
+- **Font/size** (`format_names_font`): `Font(name='KaiTi TC', size=15)`
+- **Column layout** (`insert_names`): `name_cols = [2, 5, 8, 11]` (B, E, H, K) and row range 5–30
+- **Footer text** (`add_footer`): `"出入平安   生意興隆   身體健康"`
 - **Year stem**: passed as `year_stem` to `TempleWorkflow.__init__()`, defaults to `"丙午"`
 
 ## Batch Config Format
