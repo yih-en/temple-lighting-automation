@@ -9,11 +9,13 @@ Python CLI tool that automates monthly temple lighting donation spreadsheet proc
 ## Setup
 
 ```bash
-pip install openpyxl          # or: pip install -r requirements.txt
-python setup_verify.py        # optional diagnostics
+python3 -m venv .venv
+source .venv/bin/activate    # each new terminal session
+pip install openpyxl
+python setup_verify.py       # optional diagnostics
 ```
 
-Python 3.7+ required. No environment variables needed.
+Python 3.7+ required. On macOS with Homebrew Python, always use a venv (avoid `--break-system-packages`).
 
 ## Running the Tool
 
@@ -24,39 +26,57 @@ python -m temple_lighting.batch             # batch mode (requires batch_config.
 python setup_verify.py                      # system diagnostics
 ```
 
+## Local Configuration
+
+`config.local.json` (gitignored, machine-specific) is loaded automatically:
+
+```json
+{
+  "excel_file": "/path/to/file.xlsx",
+  "year_stem": "丙午",
+  "open_with": "Microsoft Excel",
+  "save_pdf_path": "/path/to/pdf/output/folder"
+}
+```
+
+`save_pdf_path` enables PDF export via AppleScript (macOS only). `open_with` sets the application used to open the Excel file.
+
 ## Architecture
 
-The project uses a three-tier interface design over a single core engine:
+Three-tier interface over a single core engine:
 
 ```
-temple_lighting/cli.py       (menu)
+temple_lighting/cli.py        (menu)
 temple_lighting/automation.py (direct)   →   TempleWorkflow class
-temple_lighting/batch.py     (batch)
+temple_lighting/batch.py      (batch)
 ```
 
-**`TempleWorkflow`** (in `temple_lighting/automation.py`) is the only class in the codebase. All processing flows through its `run_workflow()` method, which executes this pipeline:
+**`TempleWorkflow`** (in `temple_lighting/automation.py`) is the only class. All processing flows through `run_workflow()`:
 
-1. `clear_sheet_data()` — clears columns B, E, H, K (rows 5–30)
-2. `clean_names()` — strips numbers, checkmarks (✔️/✓), and Unicode invisible chars (U+2060)
-3. `insert_names()` — distributes names across 4 columns: B (1–26), E (27–52), H (53–78), K (79–104)
-4. `format_names_font()` — applies KaiTi TC font, size 15, centered alignment
-5. `add_borders()` — thin borders on all populated cells
-6. `update_date()` — sets row 2 header to lunar date (e.g., "丙午年三月十五日")
-7. `add_footer()` — inserts blessing text at row 35
-8. `save_workbook()` — persists to .xlsx
+1. `clear_sheet_data()` — clears values AND borders from all 8 columns (A/B/D/E/G/H/J/K, rows 5–30)
+2. `insert_names()` — distributes names across 4 column pairs: A+B (1–26), D+E (27–52), G+H (53–78), J+K (79–104); sequential numbering across all columns
+3. `format_names_font()` — Chinese names: KaiTi TC size 15 left-aligned; English names: Aptos size 13 with `shrink_to_fit=True`; numbers: KaiTi TC size 15 centered
+4. `add_borders()` — section-aware: solid `thin` outer edges, `dashed` inner dividers; only borders rows that contain data
+5. `update_date()` — sets row 2 header (e.g., "丙午年三月十五日"), KaiTi TC size 24 bold
+6. `save_workbook()` — persists to .xlsx
+7. `_export_and_open()` — on macOS with `save_pdf_path` configured: uses AppleScript to open in Excel, activate the target sheet, export single-sheet PDF, keep Excel open; falls back to `open -a` if AppleScript fails
 
-**`temple_lighting/batch.py`** reads `batch_config.json` to process multiple sheets sequentially. It imports `TempleWorkflow` directly from `temple_lighting.automation`.
+The footer ("出入平安 生意興隆 身體健康") lives in the Excel template's print footer — do not write it to a cell.
 
-**`temple_lighting/cli.py`** launches `automation` and `batch` modules via `subprocess -m` for menu options 1–2. Option 3 reads `docs/AUTOMATION_GUIDE.md` using a path relative to `__file__`.
+**PDF filename convention**: `{first 2 chars of excel filename}年{sheet name}.pdf`
+Example: excel file `丙午年初一十五点灯.xlsx`, sheet `三月十五日` → `丙午年三月十五日.pdf`
+
+**`temple_lighting/batch.py`** reads `batch_config.json` to process multiple sheets sequentially.
+
+**`temple_lighting/cli.py`** launches submodules via `subprocess -m`. Option 3 reads `docs/00_START_HERE.txt`.
 
 ## Key Configuration Points
 
 When customizing behaviour, these are the relevant locations in `temple_lighting/automation.py`:
 
-- **Font/size** (`format_names_font`): `Font(name='KaiTi TC', size=15)`
-- **Column layout** (`insert_names`): `name_cols = [2, 5, 8, 11]` (B, E, H, K) and row range 5–30
-- **Footer text** (`add_footer`): `"出入平安   生意興隆   身體健康"`
-- **Year stem**: passed as `year_stem` to `TempleWorkflow.__init__()`, defaults to `"丙午"`
+- **Font/size** (`format_names_font`): Chinese `Font(name='KaiTi TC', size=15)`, English `Font(name='Aptos', size=13)`
+- **Column layout** (`insert_names`): `name_cols = [2, 5, 8, 11]` (B, E, H, K), row range 5–30
+- **Year stem**: passed as `year_stem` to `TempleWorkflow.__init__()`, loaded from `config.local.json`
 
 ## Batch Config Format
 

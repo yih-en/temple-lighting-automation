@@ -18,6 +18,7 @@ from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 import re
 import os
+import subprocess
 from pathlib import Path
 from datetime import datetime
 import json
@@ -218,6 +219,58 @@ class TempleWorkflow:
         footer_cell.alignment = Alignment(horizontal='center', vertical='center')
         print(f"✅ Applied footer formatting at row {footer_cell.row}")
 
+    def _export_and_open(self, sheet_name):
+        """Open the saved file in Excel. On macOS, also export the sheet to PDF
+        if save_pdf_path is configured in config.local.json.
+
+        PDF filename: <first 2 chars of excel filename>年<sheet name>.pdf
+        e.g. 丙午年三月十五日.pdf
+        """
+        if sys.platform != "darwin":
+            if sys.platform == "win32":
+                os.startfile(str(self.excel_path))
+            else:
+                subprocess.run(["xdg-open", str(self.excel_path)])
+            return
+
+        pdf_dir = self._local_config.get("save_pdf_path")
+
+        if not pdf_dir:
+            # No PDF path — just open in Excel
+            open_with = self._local_config.get("open_with")
+            cmd = ["open", "-a", open_with, str(self.excel_path)] if open_with else ["open", str(self.excel_path)]
+            subprocess.run(cmd)
+            return
+
+        # Build PDF filename from first 2 chars of excel stem + 年 + sheet name
+        excel_prefix = self.excel_path.stem[:2]
+        pdf_name = f"{excel_prefix}年{sheet_name}.pdf"
+        pdf_path = Path(pdf_dir) / pdf_name
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # AppleScript: open file in Excel, activate the target sheet,
+        # export ONLY that sheet as PDF (single active sheet = single-sheet PDF),
+        # then bring Excel to the foreground for the user.
+        script = f'''tell application "Microsoft Excel"
+    set wb to open POSIX file "{self.excel_path}"
+    set ws to sheet "{sheet_name}" of wb
+    activate object ws
+    save wb as filename "{pdf_path}" file format PDF file format
+    activate
+end tell'''
+
+        result = subprocess.run(["osascript", "-e", script],
+                                capture_output=True, text=True)
+
+        if result.returncode == 0:
+            print(f"✅ PDF saved: {pdf_path}")
+        else:
+            print(f"⚠️  PDF export failed: {result.stderr.strip()}")
+            # Fall back to just opening the file
+            open_with = self._local_config.get("open_with")
+            cmd = ["open", "-a", open_with, str(self.excel_path)] if open_with else ["open", str(self.excel_path)]
+            subprocess.run(cmd)
+
     def save_workbook(self):
         """Save the modified workbook"""
         self.wb.save(self.excel_path)
@@ -272,16 +325,8 @@ class TempleWorkflow:
         print(f"Total names processed: {len(names)}")
         print(f"File saved: {self.excel_path}")
 
-        # Open the file automatically
-        import subprocess, sys
-        if sys.platform == "darwin":
-            open_with = self._local_config.get("open_with")
-            cmd = ["open", "-a", open_with, str(self.excel_path)] if open_with else ["open", str(self.excel_path)]
-            subprocess.run(cmd)
-        elif sys.platform == "win32":
-            os.startfile(str(self.excel_path))
-        else:
-            subprocess.run(["xdg-open", str(self.excel_path)])
+        # Open in Excel and export to PDF
+        self._export_and_open(sheet_name)
 
 
 def _load_local_config():
