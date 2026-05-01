@@ -122,7 +122,7 @@ class TempleWorkflow:
         ws = self.wb[sheet_name]
 
         chinese_font  = Font(name=font_name, size=font_size)
-        english_font  = Font(name='Arial', size=10)
+        english_font  = Font(name='Aptos', size=13)
         number_font   = Font(name=font_name, size=font_size)
         left_align    = Alignment(horizontal='left',   vertical='center')
         shrink_align  = Alignment(horizontal='left',   vertical='center', shrink_to_fit=True)

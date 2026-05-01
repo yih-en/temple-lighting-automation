@@ -1,0 +1,24 @@
+{
+  "excel_file": "/path/to/your/丙午年初一十五点灯.xlsx",
+  "year_stem": "丙午",
+  "jobs": [
+    {
+      "sheet": "正月初一",
+      "lunar_date": "正月初一",
+      "names_file": "./names/正月初一_names.txt",
+      "enabled": true
+    },
+    {
+      "sheet": "正月十五日",
+      "lunar_date": "正月十五",
+      "names_file": "./names/正月十五_names.txt",
+      "enabled": true
+    },
+    {
+      "sheet": "三月十五日",
+      "lunar_date": "三月十五",
+      "names_file": "./names/三月十五_names.txt",
+      "enabled": false
+    }
+  ]
+}
