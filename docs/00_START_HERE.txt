@@ -21,18 +21,19 @@ STEP 1: UNDERSTAND WHAT YOU HAVE
   • cli.py ............................... Menu interface
 
 ⚙️ CONFIGURATION:
-  • batch_config.json ................... Configuration file (auto-created)
+  • config.local.json ................... Your local settings (gitignored)
+  • batch_config.json ................... Batch processing config (auto-created)
 
 ================================================================================
 STEP 2: QUICK SETUP (5 MINUTES)
 ================================================================================
 
-1. INSTALL PYTHON DEPENDENCY:
+1. INSTALL DEPENDENCIES:
    Open Terminal and run these commands one at a time:
 
    python3 -m venv .venv
    source .venv/bin/activate
-   pip install openpyxl
+   pip install -r requirements.txt
 
    Your terminal prompt will now show (.venv) — this means it's ready.
 
@@ -61,11 +62,11 @@ FOR 初一 (1st day of month):
   1. source .venv/bin/activate    ← (skip if already activated)
   2. python -m temple_lighting
   3. Select "1. Process Single Sheet"
-  4. Enter your Excel file path
+  4. Enter your Excel file path (or press Enter to use saved path)
   5. Select the "初一" sheet (e.g., "三月初一")
   6. Paste your names list (with numbers and checkmarks)
   7. Press Enter twice
-  8. ✅ DONE! File is automatically saved
+  8. ✅ DONE! File saved, PDF exported, Excel opens automatically
 
 FOR 十五 (15th day of month):
   1. Repeat the same process
@@ -84,11 +85,12 @@ Desktop/
 ├── temple/
 │   ├── 点灯/
 │   │   ├── 丙午年初一十五点灯.xlsx ......... Main Excel file
-│   │   └── PDFs/ ......................... For exported PDFs
+│   │   └── pdf/ .......................... Auto-exported PDFs land here
 │   │
 │   └── temple-lighting-automation/ ....... This project folder
 │       ├── temple_lighting/
 │       ├── .venv/                        ← Virtual environment (local only)
+│       ├── config.local.json             ← Your local settings (gitignored)
 │       ├── batch_config.json
 │       └── names/ (optional)
 │           ├── 正月初一_names.txt
@@ -114,22 +116,44 @@ When you run the script, it automatically:
    - Column K: Names 79-104
 
 ✅ Formats all names
-   - Font: KaiTi TC, Size 15
-   - Alignment: Centered
-   - Borders: Thin borders
-   - Row numbers: Automatic
+   - Chinese names: KaiTi TC, Size 15, left-aligned
+   - English names: Aptos, Size 13, shrink to fit
+   - Row numbers: centered
+   - Borders: solid outer edges, dashed inner dividers
 
 ✅ Updates the spreadsheet
-   - Date header: "丙午年三月十五日"
-   - Footer: "出入平安   生意興隆   身體健康"
+   - Date header: "丙午年三月十五日" (KaiTi TC, size 24, bold)
 
 ✅ Saves the file
    - Your Excel file is saved automatically
 
+✅ Exports to PDF and opens Excel  (requires config.local.json)
+   - PDF saved to your configured folder
+   - Named: 丙午年三月十五日.pdf
+   - Excel opens automatically for review
+
 TOTAL TIME: ~2 seconds ⚡
 
 ================================================================================
-STEP 6: NEED HELP?
+STEP 6: LOCAL CONFIGURATION
+================================================================================
+
+Create config.local.json in the project root to save your settings:
+
+{
+  "excel_file": "/Users/username/Desktop/temple/点灯/丙午年初一十五点灯.xlsx",
+  "year_stem": "丙午",
+  "open_with": "Microsoft Excel",
+  "save_pdf_path": "/Users/username/Desktop/temple/点灯/pdf"
+}
+
+This file is gitignored — your paths stay private and local.
+
+save_pdf_path  → folder where PDFs are saved after each run
+open_with      → application to open the Excel file with
+
+================================================================================
+STEP 7: NEED HELP?
 ================================================================================
 
 Problem? Check these in order:
@@ -147,10 +171,10 @@ Problem? Check these in order:
 TROUBLESHOOTING QUICK FIXES
 ================================================================================
 
-PROBLEM: "ModuleNotFoundError: No module named 'openpyxl'"
+PROBLEM: "ModuleNotFoundError: No module named 'openpyxl'" or 'xlwings'
 FIX: Make sure your virtual environment is activated first:
      source .venv/bin/activate
-     pip install openpyxl
+     pip install -r requirements.txt
 
 PROBLEM: "externally-managed-environment" when running pip
 FIX: Use a virtual environment (see STEP 2 above)
@@ -165,8 +189,12 @@ FIX: Use the sheet number instead of the name, like: "6"
 PROBLEM: Font shows as different style
 FIX: Install KaiTi TC fonts, or change the font name in the script
 
+PROBLEM: "PDF export skipped"
+FIX: Check that save_pdf_path is set in config.local.json and
+     xlwings is installed (pip install -r requirements.txt)
+
 ================================================================================
-STEP 7: ADVANCED OPTIONS (OPTIONAL)
+STEP 8: ADVANCED OPTIONS (OPTIONAL)
 ================================================================================
 
 BATCH PROCESSING (Process multiple sheets at once):
@@ -180,7 +208,7 @@ SAVE NAMES FOR REUSE (Next year):
 
 CUSTOMIZE FONTS/FORMATTING:
   1. Edit: temple_lighting/automation.py
-  2. Look for: Font, footer_text, alignment sections
+  2. Look for: format_names_font() for font settings
   3. Save and run
 
 ================================================================================
@@ -201,7 +229,7 @@ To get started right now:
 
   python3 -m venv .venv
   source .venv/bin/activate
-  pip install openpyxl
+  pip install -r requirements.txt
   python -m temple_lighting
 
 For more details, see README.md or docs/AUTOMATION_GUIDE.md
@@ -209,7 +237,7 @@ For more details, see README.md or docs/AUTOMATION_GUIDE.md
 Happy automating! 🙏
 
 ================================================================================
-VERSION: 1.0
+VERSION: 1.1
 COMPATIBILITY: Python 3.7+, Mac/Linux/Windows
 
 ================================================================================

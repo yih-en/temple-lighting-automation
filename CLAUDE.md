@@ -10,9 +10,9 @@ Python CLI tool that automates monthly temple lighting donation spreadsheet proc
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate    # each new terminal session
-pip install openpyxl
-python setup_verify.py       # optional diagnostics
+source .venv/bin/activate        # each new terminal session
+pip install -r requirements.txt  # openpyxl + xlwings
+python setup_verify.py           # optional diagnostics
 ```
 
 Python 3.7+ required. On macOS with Homebrew Python, always use a venv (avoid `--break-system-packages`).
@@ -59,9 +59,11 @@ temple_lighting/batch.py      (batch)
 4. `add_borders()` — section-aware: solid `thin` outer edges, `dashed` inner dividers; only borders rows that contain data
 5. `update_date()` — sets row 2 header (e.g., "丙午年三月十五日"), KaiTi TC size 24 bold
 6. `save_workbook()` — persists to .xlsx
-7. `_export_and_open()` — on macOS with `save_pdf_path` configured: uses AppleScript to open in Excel, activate the target sheet, export single-sheet PDF, keep Excel open; falls back to `open -a` if AppleScript fails
+7. `_export_and_open()` — exports the sheet to PDF via xlwings, then opens the workbook in Excel; falls back to `_open_in_excel()` if xlwings is missing or errors
 
 The footer ("出入平安 生意興隆 身體健康") lives in the Excel template's print footer — do not write it to a cell.
+
+**PDF export** uses `xlwings`: `xw.App(visible=True)` opens Excel, `wb.sheets[sheet_name].to_pdf(path)` calls Excel's `ExportAsFixedFormat` API. This is the correct path — Excel's `save as ... file format PDF` AppleScript command returns -50 on Mac and should not be used.
 
 **PDF filename convention**: `{first 2 chars of excel filename}年{sheet name}.pdf`
 Example: excel file `丙午年初一十五点灯.xlsx`, sheet `三月十五日` → `丙午年三月十五日.pdf`

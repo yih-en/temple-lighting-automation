@@ -220,56 +220,50 @@ class TempleWorkflow:
         print(f"✅ Applied footer formatting at row {footer_cell.row}")
 
     def _export_and_open(self, sheet_name):
-        """Open the saved file in Excel. On macOS, also export the sheet to PDF
-        if save_pdf_path is configured in config.local.json.
+        """Open the workbook in Excel and export the active sheet to PDF.
+
+        PDF export requires xlwings (pip install xlwings), which calls Excel's
+        own ExportAsFixedFormat API — no watermark, perfect fidelity.
+        Falls back to opening the file only if xlwings is unavailable.
 
         PDF filename: <first 2 chars of excel filename>年<sheet name>.pdf
         e.g. 丙午年三月十五日.pdf
         """
-        if sys.platform != "darwin":
-            if sys.platform == "win32":
-                os.startfile(str(self.excel_path))
-            else:
-                subprocess.run(["xdg-open", str(self.excel_path)])
-            return
-
         pdf_dir = self._local_config.get("save_pdf_path")
 
         if not pdf_dir:
-            # No PDF path — just open in Excel
-            open_with = self._local_config.get("open_with")
-            cmd = ["open", "-a", open_with, str(self.excel_path)] if open_with else ["open", str(self.excel_path)]
-            subprocess.run(cmd)
+            self._open_in_excel()
             return
 
-        # Build PDF filename from first 2 chars of excel stem + 年 + sheet name
         excel_prefix = self.excel_path.stem[:2]
         pdf_name = f"{excel_prefix}年{sheet_name}.pdf"
         pdf_path = Path(pdf_dir) / pdf_name
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # AppleScript: open file in Excel, activate the target sheet,
-        # export ONLY that sheet as PDF (single active sheet = single-sheet PDF),
-        # then bring Excel to the foreground for the user.
-        script = f'''tell application "Microsoft Excel"
-    set wb to open POSIX file "{self.excel_path}"
-    set ws to sheet "{sheet_name}" of wb
-    activate object ws
-    save wb as filename "{pdf_path}" file format PDF file format
-    activate
-end tell'''
-
-        result = subprocess.run(["osascript", "-e", script],
-                                capture_output=True, text=True)
-
-        if result.returncode == 0:
+        try:
+            import xlwings as xw
+            app = xw.App(visible=True)
+            wb = app.books.open(str(self.excel_path))
+            wb.sheets[sheet_name].to_pdf(str(pdf_path))
             print(f"✅ PDF saved: {pdf_path}")
-        else:
-            print(f"⚠️  PDF export failed: {result.stderr.strip()}")
-            # Fall back to just opening the file
+            app.activate()
+        except ImportError:
+            print("⚠️  PDF export skipped — run: pip install xlwings")
+            self._open_in_excel()
+        except Exception as e:
+            print(f"⚠️  PDF export failed: {e}")
+            self._open_in_excel()
+
+    def _open_in_excel(self):
+        """Open the Excel file for viewing."""
+        if sys.platform == "darwin":
             open_with = self._local_config.get("open_with")
             cmd = ["open", "-a", open_with, str(self.excel_path)] if open_with else ["open", str(self.excel_path)]
             subprocess.run(cmd)
+        elif sys.platform == "win32":
+            os.startfile(str(self.excel_path))
+        else:
+            subprocess.run(["xdg-open", str(self.excel_path)])
 
     def save_workbook(self):
         """Save the modified workbook"""

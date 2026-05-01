@@ -1,13 +1,15 @@
 # Temple Lighting Donation Automation (点灯自动化工具)
 
-Automates monthly temple lighting donation spreadsheet processing. Run twice per month (初一 and 十五) to clear old data, distribute names across four columns, apply formatting, update the date header, and save.
+Automates monthly temple lighting donation spreadsheet processing. Run twice per month (初一 and 十五) to clear old data, distribute names across four columns, apply formatting, update the date header, save, and export to PDF.
 
 ---
 
 ## Setup
 
 ```bash
-pip install openpyxl
+python3 -m venv .venv
+source .venv/bin/activate          # run this every new terminal session
+pip install -r requirements.txt    # installs openpyxl + xlwings
 ```
 
 Verify your environment:
@@ -38,16 +40,33 @@ python -m temple_lighting.batch
 
 ---
 
+## Local Configuration
+
+Create `config.local.json` in the project root (it is gitignored):
+
+```json
+{
+  "excel_file": "/path/to/丙午年初一十五点灯.xlsx",
+  "year_stem": "丙午",
+  "open_with": "Microsoft Excel",
+  "save_pdf_path": "/path/to/pdf/output/folder"
+}
+```
+
+`save_pdf_path` enables automatic PDF export after each run. The PDF is named `{first 2 chars of excel filename}年{sheet name}.pdf` — e.g. `丙午年三月十五日.pdf`.
+
+---
+
 ## Normal Monthly Workflow
 
 You'll do this **twice per month**:
 
 1. Run `python -m temple_lighting`
 2. Select `1. Process Single Sheet`
-3. Enter your Excel file path (full path, e.g. `/Users/username/Desktop/temple/点灯/丙午年初一十五点灯.xlsx`)
+3. Enter your Excel file path (or press Enter to use the saved path)
 4. Select the sheet for that month (e.g. `三月初一` or just `5`)
 5. Paste your names list and press Enter twice
-6. Done — file is updated and saved (~2 seconds)
+6. Done — file is saved, PDF exported, and Excel opens (~2 seconds)
 
 ---
 
@@ -69,9 +88,9 @@ Open `temple_lighting/automation.py` to change:
 
 | Setting | Location |
 |---|---|
-| Font / size | `format_names_font()` — `Font(name='KaiTi TC', size=15)` |
-| Footer text | `add_footer()` — `footer_text="出入平安   生意興隆   身體健康"` |
-| Year stem | `TempleWorkflow.__init__()` — `year_stem="丙午"` |
+| Chinese font / size | `format_names_font()` — `Font(name='KaiTi TC', size=15)` |
+| English font / size | `format_names_font()` — `Font(name='Aptos', size=13)` |
+| Year stem | `TempleWorkflow.__init__()` — loaded from `config.local.json` |
 | Column layout | `insert_names()` — `name_cols = [2, 5, 8, 11]` |
 
 ---
@@ -99,30 +118,16 @@ Open `temple_lighting/automation.py` to change:
 
 ## Troubleshooting
 
-**`ModuleNotFoundError: No module named 'openpyxl'`**
+**`ModuleNotFoundError: No module named 'openpyxl'`** or **`No module named 'xlwings'`**
 ```bash
-pip install openpyxl
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 **"File not found" error** — always use the full absolute path to the Excel file.
 
 **"Sheet not found"** — use the sheet number shown in the list instead of the full name.
 
-**Font renders incorrectly** — KaiTi TC is not installed on your system. Change the font name in `automation.py` to one available on your machine (e.g. `SimHei`), or install KaiTi TC.
+**Font renders incorrectly** — KaiTi TC is not installed. Change the font name in `automation.py` to one available on your machine (e.g. `SimHei`), or install KaiTi TC.
 
----
-
-## Project Structure
-
-```
-temple-lighting-automation/
-├── temple_lighting/        # Main package
-│   ├── automation.py       # TempleWorkflow class and interactive entry point
-│   ├── batch.py            # Batch processor
-│   └── cli.py              # Menu interface
-├── docs/                   # Documentation
-├── tests/
-├── requirements.txt
-├── pyproject.toml
-└── setup_verify.py
-```
+**PDF export skipped** — ensure `save_pdf_path` is set in `config.local.json` and xlwings is installed.
