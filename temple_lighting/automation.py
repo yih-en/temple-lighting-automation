@@ -198,26 +198,12 @@ class TempleWorkflow:
         print(f"✅ Updated date to: {date_text}")
 
     def add_footer(self, sheet_name, footer_text="出入平安   生意興隆   身體健康"):
-        """Update existing footer cell font. Writes text only if no footer found in template."""
+        """Set the print footer (page setup) for the sheet."""
         ws = self.wb[sheet_name]
-
-        # Scan rows 30-45 for existing footer text so we don't create a duplicate
-        footer_cell = None
-        keywords = ['出入平安', '生意興隆', '身體健康']
-        for row in range(30, 46):
-            cell = ws.cell(row=row, column=1)
-            val = str(cell.value) if cell.value else ''
-            if any(kw in val for kw in keywords):
-                footer_cell = cell
-                break
-
-        if footer_cell is None:
-            footer_cell = ws['A35']
-            footer_cell.value = footer_text
-
-        footer_cell.font      = Font(name='KaiTi TC', size=32, bold=True)
-        footer_cell.alignment = Alignment(horizontal='center', vertical='center')
-        print(f"✅ Applied footer formatting at row {footer_cell.row}")
+        ws.oddFooter.center.text = footer_text
+        ws.oddFooter.center.font = "KaiTi TC,Bold"
+        ws.oddFooter.center.size = 38
+        print(f"✅ Applied print footer to {sheet_name}")
 
     def _export_and_open(self, sheet_name):
         """Open the workbook in Excel and export the active sheet to PDF.
@@ -309,7 +295,10 @@ class TempleWorkflow:
         # Step 5: Update date
         self.update_date(sheet_name, lunar_date)
 
-        # Step 6: Save (footer is part of the template's print footer — not written to cells)
+        # Step 6: Add footer
+        self.add_footer(sheet_name)
+
+        # Step 7: Save
         self.save_workbook()
 
         print("\n" + "="*60)

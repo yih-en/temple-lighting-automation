@@ -61,7 +61,7 @@ temple_lighting/batch.py      (batch)
 6. `save_workbook()` — persists to .xlsx
 7. `_export_and_open()` — exports the sheet to PDF via xlwings, then opens the workbook in Excel; falls back to `_open_in_excel()` if xlwings is missing or errors
 
-The footer ("出入平安 生意興隆 身體健康") lives in the Excel template's print footer — do not write it to a cell.
+The footer ("出入平安   生意興隆   身體健康") is set in the Excel **print footer** (page setup, center section) by `add_footer()` before each save/export, using `ws.oddFooter.center`. Font: KaiTi TC Bold size 38. Do not write it to a cell.
 
 **PDF export** uses `xlwings`: `xw.App(visible=True)` opens Excel, `wb.sheets[sheet_name].to_pdf(path)` calls Excel's `ExportAsFixedFormat` API. This is the correct path — Excel's `save as ... file format PDF` AppleScript command returns -50 on Mac and should not be used.
 
